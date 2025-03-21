@@ -107,7 +107,7 @@ tuple<VectorXd, VectorXd, VectorXd> InteriorLPSolver::getAffineScaling(VectorXd&
 
     // Extract the affs and return
     x_aff = sol.segment(0, n);
-    lam_aff = sol.segment(n, n+m);
+    lam_aff = sol.segment(n, m);
     s_aff = sol.segment(n+m, n);
 
     return make_tuple(x_aff, lam_aff, s_aff);
@@ -238,7 +238,7 @@ tuple<VectorXd, VectorXd, VectorXd> InteriorLPSolver::getSearchDirection(VectorX
 
     // Extract the affs and return
     delta_x = sol.segment(0, n);
-    delta_lam = sol.segment(n, n+m);
+    delta_lam = sol.segment(n, m);
     delta_s = sol.segment(n+m, n);
 
     return make_tuple(delta_x, delta_lam, delta_s);
@@ -308,4 +308,43 @@ double InteriorLPSolver::getAlphaDual(VectorXd& s, VectorXd& delta_s) {
 
 
 // Mehrotra's algorithm for solve
+tuple<VectorXd, VectorXd, VectorXd> InteriorLPSolver::solve() {
+    cout << "\n============================" << endl;
+    cout << "Solving...\n" << endl;
 
+
+    auto [x_k, lam_k, s_k] = getStartingPoint();
+    VectorXd prev_x_k;
+    int counter = 0;
+
+    do {
+        auto [x_aff, lam_aff, s_aff] = getAffineScaling(x_k, lam_k, s_k);
+
+        double alpha_primal_aff = getAlphaPrimalAff(x_k, x_aff);
+        double alpha_dual_aff = getAlphaPrimalAff(s_k, s_aff);
+        double mu_aff = getMuAff(x_k, alpha_primal_aff, x_aff, s_k, alpha_dual_aff, s_aff);
+        double sigma = getSigma(mu_aff, x_k, s_k);
+
+        auto [delta_x, delta_lam, delta_s] = getSearchDirection(x_k, x_aff, s_k, s_aff, sigma, lam_k);
+
+        double alpha_primal = getAlphaPrimal(x_k, delta_x);
+        double alpha_dual= getAlphaPrimalAff(s_k, delta_s);
+
+        // Take the step:
+        prev_x_k = x_k;
+
+        x_k = x_k + alpha_primal * delta_x;
+
+        lam_k = lam_k + alpha_dual * delta_lam;
+
+        s_k = s_k + alpha_dual * delta_s;
+
+        counter++;
+
+        cout << "x_" << counter << ": " << x_k.head(2).transpose() << endl;
+    } while ((prev_x_k - x_k).norm() > 1e-12);
+
+
+    cout << "\n============================\n" << endl;
+    cout << "\nFinished in " << counter << " iterations.\n" << endl;
+}

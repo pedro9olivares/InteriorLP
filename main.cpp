@@ -94,7 +94,7 @@ int main() {
     cout << "\nFirst x step: \n" << (x + alpha_primal*delta_x).transpose() << endl;
 
     // Ahora, si lo bueno
-
+    auto [x_sol, lam_sol, s_sol] = solver.solve();
 
     return 0;
 }

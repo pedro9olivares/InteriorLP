@@ -36,7 +36,7 @@ public:
     double getAlphaPrimal(VectorXd& x, VectorXd& delta_x);
     double getAlphaDual(VectorXd& s, VectorXd& delta_s);
 
-    void solve();
+    tuple<VectorXd, VectorXd, VectorXd> solve();
 
 };
 
