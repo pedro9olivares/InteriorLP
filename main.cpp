@@ -93,6 +93,8 @@ int main() {
 
     cout << "\nFirst x step: \n" << (x + alpha_primal*delta_x).transpose() << endl;
 
+    // Ahora, si lo bueno
+
 
     return 0;
 }
