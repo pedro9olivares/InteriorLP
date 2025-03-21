@@ -26,6 +26,7 @@ public:
 
     tuple<VectorXd, VectorXd, VectorXd> getStartingPoint();
     tuple<VectorXd, VectorXd, VectorXd> getAffineScaling(VectorXd& x, VectorXd& lam, VectorXd& s);
+    tuple<VectorXd, VectorXd, VectorXd> getCorrection(VectorXd& x, VectorXd& lam, VectorXd& s);
     double getAlphaPrimalAff(VectorXd& x, VectorXd& x_aff);
     double getAlphaDualAff(VectorXd& s, VectorXd& s_aff);
     double getMuAff(VectorXd& x, double alpha_pri_aff, VectorXd& x_aff,

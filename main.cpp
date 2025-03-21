@@ -6,6 +6,7 @@ using namespace std;
 
 int main() {
     // Example problem. m=4 and n=6 counting slacks (otherwise n=2)
+    /*
     MatrixXd A(4, 6);
     A   << 1, 1, 1, 0, 0, 0,
            3, 1, 0, 1, 0, 0,
@@ -17,6 +18,22 @@ int main() {
 
     VectorXd c(6);
     c << -3, -2, 0, 0, 0, 0;;
+    */
+
+    // Define the matrix A (4 constraints, 6 variables)
+    MatrixXd A(4, 6);
+    A << 1, 1, 1, 1, 1, 1,
+         2, 3, 4, 5, 6, 7,
+         3, 4, 5, 6, 7, 8,
+         1, 2, 3, 4, 5, 6;
+
+    // Define the vector b (right-hand side values for each constraint)
+    VectorXd b(4);
+    b << 20, 40, 60, 30;
+
+    // Define the objective function coefficients (c)
+    VectorXd c(6);
+    c << -3, -2, -4, -5, -6, -7;
 
     InteriorLPSolver solver(A, b, c);
     solver.printAttributes();

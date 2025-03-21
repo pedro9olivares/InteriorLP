@@ -113,6 +113,57 @@ tuple<VectorXd, VectorXd, VectorXd> InteriorLPSolver::getAffineScaling(VectorXd&
     return make_tuple(x_aff, lam_aff, s_aff);
 }
 
+// Gets correction step
+tuple<VectorXd, VectorXd, VectorXd> InteriorLPSolver::getCorrection(VectorXd& x, VectorXd& lam, VectorXd& s) {
+    // Vectors to return
+    VectorXd x_corr(n);
+    VectorXd lam_corr(m);
+    VectorXd s_corr(n);
+    // Vectors for the system
+    auto [x_aff, lam_aff, s_aff] = getAffineScaling(x, lam, s);
+    const VectorXd e = VectorXd::Ones(n);
+    MatrixXd X = x.asDiagonal();
+    MatrixXd S = s.asDiagonal();
+    MatrixXd I = MatrixXd::Identity(n, n);
+    MatrixXd X_aff = x_aff.asDiagonal();
+    MatrixXd S_aff = s_aff.asDiagonal();
+
+    // Building and solving system (14.31)
+    long rows = n + m + n;
+    long cols = n + m + n;
+
+    MatrixXd block_system(rows, cols);
+    block_system.setZero();
+
+    // Fill in the blocks
+    block_system.block(0, n, n, m) = A.transpose();  // A^T is of size (nxm) starting at (0,n)
+    block_system.block(0, n+m, n, n) = I; // I is of size (nxn) starting at (0, n+m)
+
+    block_system.block(n, 0, m, n) = A;  // A is of size (mxn) starting at (n,0)
+
+    block_system.block(n + m, 0, n, n) = S;  // S is of size (nxn) starting at (n+m,0)
+    block_system.block(n + m, n + m, n, n) = X;  // X is of size (nxn) starting at (n+m, n+m)
+
+    // Create the RHS of the system
+    VectorXd RHS(n + m + n);
+    RHS.setZero();
+    //HS << 0, 0, - X_aff * S_aff * e;
+    RHS.segment(n + m, n) = -X_aff * S_aff * e;
+
+    // Solve the system
+    VectorXd sol(n + m + n);
+    sol << x_corr, lam_corr, s_corr;
+
+    sol = block_system.colPivHouseholderQr().solve(RHS);
+
+    // Extract the affs and return
+    x_corr = sol.segment(0, n);
+    lam_corr = sol.segment(n, m);
+    s_corr = sol.segment(n+m, n);
+
+    return make_tuple(x_corr, lam_corr, s_corr);
+}
+
 double InteriorLPSolver::getAlphaPrimalAff(VectorXd &x, VectorXd &x_aff) {
     double alpha_pri_aff;
     vector<double> neg_x_aff;
@@ -320,6 +371,12 @@ tuple<VectorXd, VectorXd, VectorXd> InteriorLPSolver::solve() {
     do {
         auto [x_aff, lam_aff, s_aff] = getAffineScaling(x_k, lam_k, s_k);
 
+        // The following four lines add correction
+        auto [x_corr, lam_corr, s_corr] = getCorrection(x_k, lam_k, s_k);
+        x_aff += x_corr;
+        lam_aff += lam_corr;
+        s_aff += s_corr;
+
         double alpha_primal_aff = getAlphaPrimalAff(x_k, x_aff);
         double alpha_dual_aff = getAlphaPrimalAff(s_k, s_aff);
         double mu_aff = getMuAff(x_k, alpha_primal_aff, x_aff, s_k, alpha_dual_aff, s_aff);
@@ -342,9 +399,10 @@ tuple<VectorXd, VectorXd, VectorXd> InteriorLPSolver::solve() {
         counter++;
 
         cout << "x_" << counter << ": " << x_k.head(2).transpose() << endl;
-    } while ((prev_x_k - x_k).norm() > 1e-12);
+    } while ((prev_x_k - x_k).norm() > 1e-6);
 
 
-    cout << "\n============================\n" << endl;
-    cout << "\nFinished in " << counter << " iterations.\n" << endl;
+    cout << "\n============================" << endl;
+    cout << "Finished in " << counter << " iterations.\n" << endl;
+    cout << "x solution : " << "(" << x_k.head(2).transpose() << ")" << endl;
 }
