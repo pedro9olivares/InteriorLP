@@ -21,9 +21,9 @@ private:
 public:
     // Constructor
     InteriorLPSolver(MatrixXd& A_, VectorXd& b_, VectorXd& c_);
-
     void printAttributes();
 
+    // Methods
     tuple<VectorXd, VectorXd, VectorXd> getStartingPoint();
     tuple<VectorXd, VectorXd, VectorXd> getAffineScaling(VectorXd& x, VectorXd& lam, VectorXd& s);
     tuple<VectorXd, VectorXd, VectorXd> getCorrection(VectorXd& x, VectorXd& lam, VectorXd& s);
@@ -36,9 +36,8 @@ public:
         VectorXd& s, VectorXd& s_aff, double sigma, VectorXd& lam);
     double getAlphaPrimal(VectorXd& x, VectorXd& delta_x);
     double getAlphaDual(VectorXd& s, VectorXd& delta_s);
-
+    // Solve
     tuple<VectorXd, VectorXd, VectorXd> solve();
-
 };
 
 #endif //INTERIORLPSOLVER_H

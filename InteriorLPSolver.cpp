@@ -405,4 +405,6 @@ tuple<VectorXd, VectorXd, VectorXd> InteriorLPSolver::solve() {
     cout << "\n============================" << endl;
     cout << "Finished in " << counter << " iterations.\n" << endl;
     cout << "x solution : " << "(" << x_k.head(2).transpose() << ")" << endl;
+
+    return make_tuple(x_k, lam_k, s_k);
 }
